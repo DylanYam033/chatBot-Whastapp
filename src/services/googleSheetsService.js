@@ -1,5 +1,5 @@
-import path from 'path';
 import { google } from 'googleapis';
+import config from '../config/env.js';
 
 const sheets = google.sheets('v4');
 
@@ -13,31 +13,33 @@ async function addRowToSheet(auth, spreadsheetId, values) {
             values: [values],
         },
         auth,
-    }
+    };
 
     try {
-        const response = (await sheets.spreadsheets.values.append(request).data);
-        return response;
+        const response = await sheets.spreadsheets.values.append(request);
+        return response.data;
     } catch (error) {
-        console.error(error)
+        console.error('Error al agregar fila:', error);
+        throw error;
     }
 }
 
 const appendToSheet = async (data) => {
     try {
         const auth = new google.auth.GoogleAuth({
-            keyFile: path.join(process.cwd(), 'src/credentials', 'credentials.json'),
-            scopes: ['https://www.googleapis.com/auth/spreadsheets']
+            credentials: config.GCP_CREDENTIALS,
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         });
 
         const authClient = await auth.getClient();
-        const spreadsheetId = '1xCVIOON4swA2lYMUqk1JRo9vm8bj0E7GGVIlutBUx-M'
+        const spreadsheetId = config.SPREADSHEET_ID;
 
         await addRowToSheet(authClient, spreadsheetId, data);
-        return 'Datos correctamente agregados'
+        return 'Datos correctamente agregados';
     } catch (error) {
-        console.error(error);
+        console.error('Error en appendToSheet:', error);
+        throw error;
     }
-}
+};
 
 export default appendToSheet;
